@@ -1,0 +1,170 @@
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--mp-ink-muted);
+
+  &::before {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--mp-line-strong);
+  }
+  &[data-status='pending']::before {
+    background: var(--mp-accent);
+  }
+  &[data-status='saving']::before {
+    background: var(--mp-accent);
+    animation: pulse 1s infinite alternate;
+  }
+  &[data-status='saved']::before {
+    background: var(--mp-success);
+  }
+  &[data-status='error'] {
+    color: var(--mp-danger);
+  }
+  &[data-status='error']::before {
+    background: var(--mp-danger);
+  }
+}
+@keyframes pulse {
+  to {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .save-status::before {
+    animation: none !important;
+  }
+}
+
+.wizard {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The step rail: a vertical spine that fills in as steps are completed. */
+.step-rail ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+  @media (max-width: 991.98px) {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+  }
+}
+
+.step-rail li {
+  position: relative;
+  padding-bottom: 1.25rem;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0.95rem;
+    top: 2.1rem;
+    bottom: 0.2rem;
+    width: 2px;
+    background: var(--mp-line);
+  }
+  &.is-done::after {
+    background: var(--mp-primary);
+  }
+
+  @media (max-width: 991.98px) {
+    padding-bottom: 0;
+    &::after {
+      display: none;
+    }
+  }
+}
+
+.step-rail button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  &:focus-visible {
+    outline: 3px solid var(--mp-focus);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 991.98px) {
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+  }
+}
+
+.step-rail__num {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--mp-line-strong);
+  background: var(--mp-panel);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.is-current .step-rail__num {
+  border-color: var(--mp-primary);
+  background: var(--mp-primary);
+  color: #fff;
+}
+.is-done .step-rail__num {
+  border-color: var(--mp-primary);
+  color: var(--mp-primary);
+}
+.is-current .step-rail__title {
+  font-weight: 650;
+}
+
+.wizard__head {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--mp-line);
+
+  h2:focus {
+    outline: none;
+  }
+}
+.wizard__count {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--mp-ink-muted);
+}
+
+.step-body {
+  padding: 1.5rem;
+}
+
+.wizard__actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--mp-line);
+  background: var(--mp-canvas);
+  border-radius: 0 0 0.5rem 0.5rem;
+}

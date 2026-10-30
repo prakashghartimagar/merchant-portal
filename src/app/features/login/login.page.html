@@ -1,0 +1,54 @@
+<main class="login">
+  <section class="login__panel" aria-labelledby="login-title">
+    <div class="login__brand">
+      <span class="brand-mark" aria-hidden="true"></span> Merchant onboarding
+    </div>
+    <h1 id="login-title" class="h3 mb-1">Sign in</h1>
+    <p class="text-secondary mb-4">
+      This demo has no passwords. Pick a user to see the portal as that role.
+    </p>
+
+    @if (reason() === 'expired') {
+      <div class="alert alert-warning" role="status">
+        Your session ended. Sign in again to continue.
+      </div>
+    }
+
+    <form (ngSubmit)="signIn()">
+      @let state = users();
+      @if (state.status === 'loading') {
+        <p aria-live="polite">Loading demo users…</p>
+      } @else if (state.status === 'error') {
+        <div class="alert alert-danger" role="alert">
+          {{ state.message }} Is the mock API running (<code>npm run api</code>)?
+        </div>
+      } @else {
+        <fieldset>
+          <legend class="form-label fw-semibold">Demo user</legend>
+          <div class="user-list">
+            @for (u of state.users; track u.id) {
+              <label class="user-option" [class.is-selected]="selected() === u.id">
+                <input
+                  type="radio"
+                  name="user"
+                  [value]="u.id"
+                  [ngModel]="selected()"
+                  (ngModelChange)="selected.set($event)"
+                />
+                <span class="user-option__name">{{ u.name }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      }
+
+      @if (error()) {
+        <div class="text-danger mt-3" role="alert">{{ error() }}</div>
+      }
+
+      <button type="submit" class="btn btn-primary w-100 mt-4" [disabled]="signingIn()">
+        {{ signingIn() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </section>
+</main>

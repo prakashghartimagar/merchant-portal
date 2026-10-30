@@ -1,0 +1,237 @@
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ heading() }}</h1>
+    <p class="page-sub">
+      @if (store.hasLoaded()) {
+        {{ store.total() }} {{ store.total() === 1 ? 'application' : 'applications' }}
+      } @else {
+        &nbsp;
+      }
+    </p>
+  </div>
+  @if (canCreate()) {
+    <a class="btn btn-primary" routerLink="/applications/new">Start new application</a>
+  }
+</div>
+
+<section class="panel" aria-labelledby="filters-title">
+  <h2 id="filters-title" class="visually-hidden">Filters</h2>
+  <div class="filters">
+    <div class="filters__search">
+      <label class="form-label" for="search">Search</label>
+      <input
+        id="search"
+        type="search"
+        class="form-control"
+        placeholder="Business name or reference"
+        autocomplete="off"
+        [value]="searchText()"
+        (input)="searchText.set($any($event.target).value)"
+      />
+    </div>
+    <div>
+      <label class="form-label" for="status">Status</label>
+      <select
+        id="status"
+        class="form-select"
+        [value]="query().status ?? ''"
+        (change)="onStatusChange($any($event.target).value)"
+      >
+        <option value="">All statuses</option>
+        @for (s of statuses; track s) {
+          <option [value]="s" [selected]="query().status === s">{{ statusLabels[s] }}</option>
+        }
+      </select>
+    </div>
+    @if (isAdmin()) {
+      <div class="form-check filters__check">
+        <input
+          id="unassigned"
+          class="form-check-input"
+          type="checkbox"
+          [checked]="query().unassigned"
+          (change)="update({ unassigned: $any($event.target).checked, page: 1 })"
+        />
+        <label class="form-check-label" for="unassigned">Needs a reviewer</label>
+      </div>
+    }
+    @if (hasFilters()) {
+      <button type="button" class="btn btn-link filters__clear" (click)="clearFilters()">
+        Clear filters
+      </button>
+    }
+  </div>
+
+  @if (store.error(); as error) {
+    <div class="alert alert-danger d-flex flex-wrap align-items-center gap-3 m-3" role="alert">
+      <span>Couldn’t load applications. {{ error }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger ms-auto" (click)="store.retry()">
+        Try again
+      </button>
+    </div>
+  }
+
+  <div
+    class="table-wrap"
+    [class.is-updating]="store.loading() && store.hasLoaded()"
+    [attr.aria-busy]="store.loading()"
+  >
+    <table class="app-table">
+      <caption class="visually-hidden">
+        {{
+          heading()
+        }}, page
+        {{
+          query().page
+        }}
+        of
+        {{
+          store.pageCount()
+        }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Reference</th>
+          <th scope="col" [attr.aria-sort]="ariaSort('businessName')">
+            <button type="button" class="sort-btn" (click)="sortBy('businessName')">
+              Business
+            </button>
+          </th>
+          <th scope="col">Status</th>
+          <th scope="col" class="num" [attr.aria-sort]="ariaSort('volume')">
+            <button type="button" class="sort-btn" (click)="sortBy('volume')">
+              Monthly volume
+            </button>
+          </th>
+          @if (showOwnerColumn()) {
+            <th scope="col">Sales owner</th>
+          }
+          @if (showReviewerColumn()) {
+            <th scope="col">Reviewer</th>
+          }
+          <th scope="col" [attr.aria-sort]="ariaSort('updatedAt')">
+            <button type="button" class="sort-btn" (click)="sortBy('updatedAt')">
+              Last updated
+            </button>
+          </th>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!store.hasLoaded() && store.loading()) {
+          @for (row of [1, 2, 3, 4, 5]; track row) {
+            <tr class="skeleton-row" aria-hidden="true">
+              <td colspan="8"><span class="skeleton"></span></td>
+            </tr>
+          }
+        }
+        @for (app of store.items(); track app.id) {
+          <tr>
+            <td data-label="Reference" class="ref">{{ app.reference }}</td>
+            <td data-label="Business">
+              <a class="row-link" [routerLink]="['/applications', app.id]">{{
+                app.businessName || 'Untitled draft'
+              }}</a>
+            </td>
+            <td data-label="Status"><app-status-badge [status]="app.status" /></td>
+            <td data-label="Monthly volume" class="num">{{ app.expectedMonthlyVolume | npr }}</td>
+            @if (showOwnerColumn()) {
+              <td data-label="Sales owner">{{ app.createdBy.name }}</td>
+            }
+            @if (showReviewerColumn()) {
+              <td data-label="Reviewer">
+                @if (app.assignedReviewer) {
+                  {{ app.assignedReviewer.name }}
+                } @else if (app.status !== 'DRAFT') {
+                  <span class="text-warning-emphasis">Not assigned</span>
+                } @else {
+                  <span class="text-secondary">—</span>
+                }
+              </td>
+            }
+            <td data-label="Last updated">
+              <time [attr.datetime]="app.updatedAt">{{
+                app.updatedAt | date: 'd MMM y, HH:mm'
+              }}</time>
+            </td>
+            <td class="actions">
+              @if (canEdit(app)) {
+                <a
+                  class="btn btn-sm btn-outline-primary"
+                  [routerLink]="['/applications', app.id, 'edit']"
+                >
+                  Continue<span class="visually-hidden"> {{ app.businessName }}</span>
+                </a>
+              }
+            </td>
+          </tr>
+        } @empty {
+          @if (store.hasLoaded() && !store.error()) {
+            <tr>
+              <td colspan="8" class="empty">
+                @if (hasFilters()) {
+                  <p class="mb-2">No applications match these filters.</p>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="clearFilters()"
+                  >
+                    Clear filters
+                  </button>
+                } @else if (canCreate()) {
+                  <p class="mb-2">You haven’t started any applications yet.</p>
+                  <a class="btn btn-sm btn-primary" routerLink="/applications/new"
+                    >Start new application</a
+                  >
+                } @else {
+                  <p class="mb-0">
+                    Nothing here yet. Applications appear once they’re assigned to you.
+                  </p>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (store.total() > 0) {
+    <nav class="pager" aria-label="Pagination">
+      <span class="pager__range" aria-live="polite">
+        {{ store.range().from }}–{{ store.range().to }} of {{ store.total() }}
+      </span>
+      <div class="pager__size">
+        <label for="pageSize" class="form-label mb-0">Rows</label>
+        <select
+          id="pageSize"
+          class="form-select form-select-sm"
+          (change)="onPageSizeChange($any($event.target).value)"
+        >
+          @for (size of pageSizes; track size) {
+            <option [value]="size" [selected]="query().pageSize === size">{{ size }}</option>
+          }
+        </select>
+      </div>
+      <div class="pager__buttons">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="query().page <= 1"
+          (click)="update({ page: query().page - 1 })"
+        >
+          Previous
+        </button>
+        <span>Page {{ query().page }} of {{ store.pageCount() }}</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="query().page >= store.pageCount()"
+          (click)="update({ page: query().page + 1 })"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
+  }
+</section>

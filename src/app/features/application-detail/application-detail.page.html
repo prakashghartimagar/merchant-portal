@@ -1,0 +1,189 @@
+<a class="back-link" routerLink="/applications">Applications</a>
+
+@let s = state();
+@if (s.status === 'loading') {
+  <div class="panel p-4 mt-3" aria-busy="true">Loading application…</div>
+} @else if (s.status === 'error') {
+  <div class="alert alert-danger d-flex flex-wrap align-items-center gap-3 mt-3" role="alert">
+    <span>Couldn’t load this application. {{ s.message }}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" (click)="retry()">
+      Try again
+    </button>
+  </div>
+} @else {
+  @let app = s.app;
+  <header class="detail-head">
+    <div>
+      <p class="detail-ref">{{ app.reference }}</p>
+      <h1 class="page-title">{{ app.businessName || 'Untitled draft' }}</h1>
+      <p class="page-sub">
+        Created by {{ app.createdBy.name }}
+        @if (app.submittedAt) {
+          · submitted {{ app.submittedAt | date: 'd MMM y' }}
+        }
+      </p>
+    </div>
+    <div class="detail-head__side">
+      <app-status-badge [status]="app.status" />
+      @if (canEdit()) {
+        <a class="btn btn-primary" [routerLink]="['/applications', app.id, 'edit']"
+          >Continue editing</a
+        >
+      }
+    </div>
+  </header>
+
+  @if (flash()) {
+    <div class="alert alert-success alert-dismissible" role="status">
+      {{ flash() }}
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Dismiss"
+        (click)="flash.set(null)"
+      ></button>
+    </div>
+  }
+
+  <div class="detail-grid">
+    <div class="detail-main">
+      <section class="panel detail-section" aria-labelledby="sec-business">
+        <h2 id="sec-business" class="section-title">Business</h2>
+        <dl class="kv">
+          <div class="kv-row">
+            <dt>Legal name</dt>
+            <dd>{{ app.business.legalName || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Type</dt>
+            <dd>{{ typeLabel(app.business.businessType) || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Category</dt>
+            <dd>{{ categoryLabel(app.business.category) || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Registration no.</dt>
+            <dd>{{ app.business.registrationNumber || '—' }}</dd>
+          </div>
+          <div
+            appMaskedField
+            label="PAN"
+            field="panNumber"
+            [applicationId]="app.id"
+            [maskedValue]="app.business.panNumber"
+            [canReveal]="canReveal()"
+          ></div>
+          <div class="kv-row">
+            <dt>Monthly volume</dt>
+            <dd class="num">{{ app.business.expectedMonthlyVolume | npr }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Average transaction</dt>
+            <dd class="num">{{ app.business.averageTicketSize | npr }}</dd>
+          </div>
+          @if (app.business.website) {
+            <div class="kv-row">
+              <dt>Website</dt>
+              <dd>{{ app.business.website }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="panel detail-section" aria-labelledby="sec-contact">
+        <h2 id="sec-contact" class="section-title">Owner and contact</h2>
+        <dl class="kv">
+          <div class="kv-row">
+            <dt>Owner</dt>
+            <dd>{{ app.contact.ownerName || '—' }}</dd>
+          </div>
+          <div
+            appMaskedField
+            label="ID number"
+            field="ownerIdNumber"
+            [applicationId]="app.id"
+            [maskedValue]="app.contact.ownerIdNumber"
+            [canReveal]="canReveal()"
+          ></div>
+          <div class="kv-row">
+            <dt>Email</dt>
+            <dd>{{ app.contact.email || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Mobile</dt>
+            <dd>{{ app.contact.phone || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Address</dt>
+            <dd>{{ address(app.contact) }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel detail-section" aria-labelledby="sec-bank">
+        <h2 id="sec-bank" class="section-title">Settlement account</h2>
+        <dl class="kv">
+          <div class="kv-row">
+            <dt>Bank</dt>
+            <dd>{{ app.bank.bankName || '—' }}</dd>
+          </div>
+          <div class="kv-row">
+            <dt>Account holder</dt>
+            <dd>{{ app.bank.accountHolderName || '—' }}</dd>
+          </div>
+          <div
+            appMaskedField
+            label="Account number"
+            field="accountNumber"
+            [applicationId]="app.id"
+            [maskedValue]="app.bank.accountNumber"
+            [canReveal]="canReveal()"
+          ></div>
+        </dl>
+        @if (canReveal()) {
+          <p class="form-text mb-0">
+            Revealed values hide again after 30 seconds. Each reveal is recorded.
+          </p>
+        }
+      </section>
+    </div>
+
+    <aside class="detail-side">
+      @if (canDecide()) {
+        <section class="panel detail-section decision-panel" aria-labelledby="sec-decision">
+          <h2 id="sec-decision" class="section-title">Record your decision</h2>
+          <app-decision-form [applicationId]="app.id" (decided)="onUpdated('Decision recorded.')" />
+        </section>
+      }
+
+      @if (canAssign()) {
+        <section class="panel detail-section" aria-labelledby="sec-assign">
+          <h2 id="sec-assign" class="section-title">Assignment</h2>
+          <p class="text-secondary small">
+            @if (app.assignedReviewer) {
+              Currently with {{ app.assignedReviewer.name }}.
+            } @else {
+              Nobody is reviewing this yet.
+            }
+          </p>
+          <app-assignment-panel
+            [applicationId]="app.id"
+            [currentReviewerId]="app.assignedReviewer?.id ?? null"
+            (assigned)="onUpdated('Reviewer assigned.')"
+          />
+        </section>
+      } @else if (app.assignedReviewer) {
+        <section class="panel detail-section" aria-labelledby="sec-reviewer">
+          <h2 id="sec-reviewer" class="section-title">Reviewer</h2>
+          <p class="mb-0">{{ app.assignedReviewer.name }}</p>
+        </section>
+      }
+
+      <section class="panel detail-section" aria-labelledby="sec-history">
+        <h2 id="sec-history" class="section-title">Risk and activity history</h2>
+        <app-risk-history [entries]="s.history" />
+      </section>
+    </aside>
+  </div>
+}

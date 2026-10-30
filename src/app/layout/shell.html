@@ -1,0 +1,47 @@
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="app-header">
+  <div class="app-header__inner container-xl">
+    <a class="brand" routerLink="/applications">
+      <span class="brand__mark" aria-hidden="true"></span>
+      Merchant onboarding
+    </a>
+    <nav aria-label="Main" class="app-nav">
+      <a
+        routerLink="/applications"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >Applications</a
+      >
+      @if (canCreate()) {
+        <a routerLink="/applications/new" routerLinkActive="is-active">New application</a>
+      }
+    </nav>
+    <div class="app-user">
+      <span class="app-user__name">{{ user()?.name }}</span>
+      <span class="app-user__role">{{ roleLabel() }}</span>
+      <button type="button" class="btn btn-sm btn-outline-light" (click)="signOut()">
+        Sign out
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="container-xl app-main" tabindex="-1">
+  <router-outlet />
+</main>
+
+@if (devMode) {
+  <details class="dev-tools">
+    <summary>Developer tools</summary>
+    <p class="small mb-2">Mock API helpers for trying failure paths.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="expireTokens()">
+        Expire access token
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="failNextSaves()">
+        Fail next 3 saves
+      </button>
+    </div>
+    <p class="small mt-2 mb-0" aria-live="polite">{{ devMessage() }}</p>
+  </details>
+}

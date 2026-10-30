@@ -1,0 +1,109 @@
+<div class="page-head">
+  <div>
+    <a class="back-link" routerLink="/applications">Applications</a>
+    <h1 class="page-title">
+      {{ reference() ? 'Application ' + reference() : 'New merchant application' }}
+    </h1>
+  </div>
+
+  @let save = saveState();
+  <div class="save-status" [attr.data-status]="save.status" role="status" aria-live="polite">
+    @switch (save.status) {
+      @case ('pending') {
+        <span>Unsaved changes</span>
+      }
+      @case ('saving') {
+        <span>Saving…</span>
+      }
+      @case ('saved') {
+        <span>Saved {{ save.lastSavedAt | date: 'HH:mm:ss' }}</span>
+      }
+      @case ('error') {
+        <span>Not saved. {{ save.error }}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" (click)="saveNow()">
+          Retry
+        </button>
+      }
+      @default {
+        <span>Drafts save automatically</span>
+      }
+    }
+  </div>
+</div>
+
+@if (loadState() === 'loading') {
+  <div class="panel p-4" aria-busy="true">Loading the draft…</div>
+} @else if (loadState() === 'error') {
+  <div class="alert alert-danger" role="alert">
+    Couldn’t open this draft. {{ loadError() }}
+    <a class="alert-link" routerLink="/applications">Back to applications</a>
+  </div>
+} @else {
+  <div class="wizard">
+    <nav class="step-rail" aria-label="Application steps">
+      <ol>
+        @for (s of steps; track s.title; let i = $index) {
+          <li [class.is-current]="step() === i" [class.is-done]="i < step() && stepIsValid(i)">
+            <button
+              type="button"
+              [disabled]="!canOpen(i)"
+              (click)="goTo(i)"
+              [attr.aria-current]="step() === i ? 'step' : null"
+            >
+              <span class="step-rail__num" aria-hidden="true">{{ i + 1 }}</span>
+              <span class="step-rail__title">{{ s.title }}</span>
+            </button>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    <section class="panel wizard__body" aria-labelledby="step-title">
+      <header class="wizard__head">
+        <p class="wizard__count">Step {{ step() + 1 }} of {{ steps.length }}</p>
+        <h2 id="step-title" class="h4" tabindex="-1" #stepHeading>{{ steps[step()].title }}</h2>
+        <p class="text-secondary mb-0">{{ steps[step()].hint }}</p>
+      </header>
+
+      <div class="step-body">
+        @switch (step()) {
+          @case (0) {
+            <app-business-step [group]="form.controls.business" />
+          }
+          @case (1) {
+            <app-contact-step [group]="form.controls.contact" />
+          }
+          @case (2) {
+            <app-bank-step [group]="form.controls.bank" [form]="form" />
+          }
+          @case (3) {
+            <app-review-step [value]="reviewValue()" (edit)="goTo($event)" />
+          }
+        }
+      </div>
+
+      @if (submitError()) {
+        <div class="alert alert-danger mx-4" role="alert">{{ submitError() }}</div>
+      }
+
+      <footer class="wizard__actions">
+        @if (step() > 0) {
+          <button type="button" class="btn btn-outline-secondary" (click)="back()">Back</button>
+        }
+        <span class="flex-grow-1"></span>
+        @if (isLastStep()) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="submitting()"
+            (click)="submit()"
+          >
+            {{ submitting() ? 'Submitting…' : 'Submit for review' }}
+          </button>
+        } @else {
+          <button type="button" class="btn btn-primary" (click)="next()">Continue</button>
+        }
+      </footer>
+    </section>
+  </div>
+}

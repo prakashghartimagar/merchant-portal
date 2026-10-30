@@ -1,0 +1,99 @@
+.app-header {
+  background: var(--mp-primary);
+  color: #fff;
+}
+
+.app-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 2rem;
+  min-height: 3.5rem;
+  padding-block: 0.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #fff;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+/* A folded-receipt mark: two offset rectangles. */
+.brand__mark {
+  width: 1.1rem;
+  height: 1.35rem;
+  background: var(--mp-accent);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 75% 88%, 50% 100%, 25% 88%, 0 100%);
+}
+
+.app-nav {
+  display: flex;
+  gap: 1.25rem;
+
+  a {
+    color: rgb(255 255 255 / 0.8);
+    text-decoration: none;
+    padding-block: 0.35rem;
+    border-bottom: 2px solid transparent;
+
+    &:hover {
+      color: #fff;
+    }
+    &.is-active {
+      color: #fff;
+      border-bottom-color: var(--mp-accent);
+    }
+  }
+}
+
+.app-user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.app-user__role {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.14);
+}
+
+@media (max-width: 575.98px) {
+  .app-user__name {
+    display: none;
+  }
+  .app-user {
+    margin-left: 0;
+  }
+}
+
+.app-main {
+  padding-block: 1.75rem 4rem;
+  &:focus {
+    outline: none;
+  }
+}
+
+.dev-tools {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  max-width: 18rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--mp-panel);
+  border: 1px dashed var(--mp-line-strong);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  z-index: 10;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+}
